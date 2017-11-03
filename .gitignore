@@ -1,5 +1,6 @@
 .idea/
 venv3/
+common/log/*.log
 bot/html_samples
 tmp.py
 todo.md
