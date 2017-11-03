@@ -5,11 +5,11 @@ import os
 import random
 from time import sleep
 
+from django.conf import settings
+from bot import urls
 import requests
-from common.client.parse_client import InstaParseClient
+from bot.client.parse_client import InstaParseClient
 
-import default_settings
-from common import urls
 
 logging.basicConfig(format='[%(asctime)s] [%(levelname)-5s] - %(message)s', level=logging.DEBUG)
 
@@ -83,7 +83,7 @@ class Bot:
 
     def _save_html_to_file(self, data: str, filename: str):
         """filename sample: tmp.html"""
-        file_path = os.path.join(default_settings.HTML_SAMPLES_DIR + filename)
+        file_path = os.path.join(settings.HTML_SAMPLES_DIR + filename)
         with codecs.open(file_path, 'w', 'utf-16') as f:
             f.write(data)
         logger.debug(f'Content was written to file: {filename}')
