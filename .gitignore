@@ -1,0 +1,9 @@
+.idea/
+venv3/
+bot/html_samples
+tmp.py
+todo.md
+common/settings.py
+
+*.pyc
+__pycache__
