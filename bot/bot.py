@@ -5,11 +5,11 @@ import os
 import random
 from time import sleep
 
-from django.conf import settings
-from bot import urls
 import requests
-from bot.client.parse_client import InstaParseClient
+from django.conf import settings
 
+from bot import urls
+from bot.client import InstaParseClient
 
 logging.basicConfig(format='[%(asctime)s] [%(levelname)-5s] - %(message)s', level=logging.DEBUG)
 
@@ -34,16 +34,16 @@ class Bot:
         logger.debug(f'Trying to login as {self.username}')
 
         base_page = self.client.session.get(url=urls.url_base)
+        print(f'Token: {base_page.cookies["csrftoken"]}')
         self.client.session.headers['X-CSRFToken'] = base_page.cookies['csrftoken']
         self._save_html_to_file(base_page.content.decode(), 'base_initial_page.html')
-        print(f'Token: {base_page.cookies["csrftoken"]}')
         sleep(random.randint(2, 7))
 
         login = self.client.session.post(url=urls.url_login, data=self.log_pass_pair, allow_redirects=True)
+        print(f'Token: {login.cookies["csrftoken"]}')
         self.client.session.headers['X-CSRFToken'] = login.cookies['csrftoken']
         self.csrf_token = login.cookies['csrftoken']
         self._save_html_to_file(login.content.decode(), 'login_page.html')
-        print(f'Token: {login.cookies["csrftoken"]}')
         sleep(random.randint(2, 7))
 
         self._check_login(login)
@@ -83,7 +83,7 @@ class Bot:
 
     def _save_html_to_file(self, data: str, filename: str):
         """filename sample: tmp.html"""
-        file_path = os.path.join(settings.HTML_SAMPLES_DIR + filename)
+        file_path = os.path.join(settings.HTML_SAMPLES_DIR_PATH, filename)
         with codecs.open(file_path, 'w', 'utf-16') as f:
             f.write(data)
         logger.debug(f'Content was written to file: {filename}')
