@@ -4,6 +4,8 @@ import os
 from django.core.management import BaseCommand
 from django.conf import settings
 
+from bot import Bot
+
 logger = logging.getLogger('bot.command.test_command')
 
 
@@ -13,9 +15,5 @@ class Command(BaseCommand):
         parser.add_argument('-t', '--tags', dest='tags', nargs='*')
 
     def handle(self, *args, **options):
-        print(args)
-        print(options)
-        filename = 'pampam.html'
-        file_path = os.path.join(settings.HTML_SAMPLES_DIR_PATH, filename)
-
-        print(file_path)
+        bot = Bot(settings.INSTA_USERNAME_TEST, settings.INSTA_PASSWORD_TEST)
+        bot._logout()

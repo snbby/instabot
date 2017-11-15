@@ -1,2 +1,3 @@
 requests==2.18.4
-django
+requests-toolbelt==0.8.0
+django==1.10.5

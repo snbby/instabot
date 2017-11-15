@@ -1,12 +1,17 @@
 from http.cookies import SimpleCookie
 
 import requests
+from requests_toolbelt.adapters import source
 import json
 
 
 class InstaParseClient:
-    def __init__(self):
+    def __init__(self, use_ip: str=None):
         self.session = requests.Session()
+        if use_ip is not None:
+            new_ip = source.SourceAddressAdapter(use_ip)
+            self.session.mount('http://', new_ip)
+            self.session.mount('https://', new_ip)
 
         self._set_default_cookies()
         self._set_default_headers()

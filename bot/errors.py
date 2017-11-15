@@ -1,0 +1,2 @@
+class InstaError(Exception):
+    pass
