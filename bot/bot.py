@@ -42,7 +42,7 @@ class Bot:
         logger.info(
             f'\nInstabot for user: {user} was initialized.'
             f'\nLikes per day: {self.user_settings.get("likes_per_day", 1000)}. Follow ratio: 1/{self.follow_ratio}'
-            f'\nUsing IP: {requests.get(url=urls.url_external_ip).json()["ip"]}'
+            f'\nUsing IP: {self.client.external_ip_address}'
         )
 
     def _login(self):

@@ -1,8 +1,10 @@
 from http.cookies import SimpleCookie
+import json
 
 import requests
 from requests_toolbelt.adapters import source
-import json
+
+from bot import urls
 
 
 class InstaParseClient:
@@ -12,6 +14,8 @@ class InstaParseClient:
             new_ip = source.SourceAddressAdapter(use_ip)
             self.session.mount('http://', new_ip)
             self.session.mount('https://', new_ip)
+
+        self.external_ip_address = self._get_external_ip_address()
 
         self._set_default_cookies()
         self._set_default_headers()
@@ -73,3 +77,12 @@ class InstaParseClient:
             'X-Instagram-AJAX': '1',
             'X-Requested-With': 'XMLHttpRequest'
         })
+
+    def _get_external_ip_address(self):
+        external_ip = 'unknown'
+        try:
+            external_ip = self.session.get(urls.url_external_ip).json()['ip']
+        finally:
+            return external_ip
+
+
