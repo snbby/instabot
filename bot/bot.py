@@ -36,6 +36,7 @@ class Bot:
 
         self.like_count = 0
         self.follow_count = 0
+        self.series_errors = 0
 
         self.client = InstaParseClient(settings.INSTA_USERS[user].get('use_ip'))
 
@@ -163,6 +164,15 @@ class Bot:
     def _log(self, message: str, logger_name: str='debug'):
         getattr(logger, logger_name)(f'User: {self.username}. {message}')
 
+        if logger_name == 'error':
+            self.series_errors += 1
+        else:
+            self.series_errors = 0
+
+        if self.series_errors >= 3:
+            logger.error(f'User: {self.username}. Three errors in a row. Wait an hour for further processing')
+            self._wait(60*60)
+
     def _start_loop(self):
         while True:
             for num, media in enumerate(self._get_media_by_tag(random.choice(self.user_settings['tags']))):
@@ -189,6 +199,3 @@ class Bot:
             self._log('Keyboard interruption', 'info')
         finally:
             self._logout()
-
-# Todo [Max] [16/11/2017 13:24] Limit number of likes/follows per day
-# Todo [Max] [16/11/2017 13:25] Write info to DB
