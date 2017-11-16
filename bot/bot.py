@@ -114,7 +114,7 @@ class Bot:
             self._log(f'Got media by tag: {tag}')
             return list(response.json()['tag']['media']['nodes'])
         else:
-            self._log('Failed to get media by tag: {tag}. Status code: {response.status_code}', 'error')
+            self._log(f'Failed to get media by tag: {tag}. Status code: {response.status_code}', 'error')
             return list()
 
     def _get_user(self, user_id: int) -> list:
