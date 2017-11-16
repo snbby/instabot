@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 
 from django.core.management import BaseCommand
 
@@ -11,6 +12,10 @@ class Command(BaseCommand):
         parser.add_argument('-t', '--tags', dest='tags', nargs='*')
 
     def handle(self, *args, **options):
-        logger.info('hohoho, info')
-        logger.warning('hohoho, warning')
-        logger.error('hohoho, error')
+        try:
+            print('ho')
+            raise Exception()
+            # sleep(5)
+        finally:
+            print('finally')
+

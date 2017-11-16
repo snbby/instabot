@@ -19,29 +19,41 @@ class Bot:
         if user not in settings.INSTA_USERS:
             raise InstaError(f'Can not find user: {user} in settings')
 
-        self.username = settings.INSTA_USERS[user]['login']
+        self.user_settings = settings.INSTA_USERS[user]
+        self.username = self.user_settings['login']
         self.log_pass_pair = {
             'username': self.username.lower(),
-            'password': settings.INSTA_USERS[user]['password']
+            'password': self.user_settings['password']
         }
+        self.like_wait_interval = int(86400 / self.user_settings.get('likes_per_day', 1000))
+        self.follow_ratio = int(
+            self.user_settings.get('likes_per_day', 1000) / self.user_settings.get('follows_per_day', 100)
+        )
 
         self.login_status = False
         self.user_id = None
         self.csrf_token = None
 
+        self.like_count = 0
+        self.follow_count = 0
+
         self.client = InstaParseClient(settings.INSTA_USERS[user].get('use_ip'))
 
-    def _login(self):
-        logger.debug(f'Trying to login as {self.username}')
+        logger.info(
+            f'\nInstabot for user: {user} was initialized.'
+            f'\nLikes per day: {self.user_settings.get("likes_per_day", 1000)}. Follow ratio: 1/{self.follow_ratio}'
+            f'\nUsing IP: {requests.get(url=urls.url_external_ip).json()["ip"]}'
+        )
 
+    def _login(self):
         base_page = self.client.session.get(url=urls.url_base)
         self.client.session.headers['X-CSRFToken'] = base_page.cookies['csrftoken']
-        self._wait()
+        self._wait(2)
 
         login = self.client.session.post(url=urls.url_login, data=self.log_pass_pair, allow_redirects=True)
         self.client.session.headers['X-CSRFToken'] = login.cookies['csrftoken']
         self.csrf_token = login.cookies['csrftoken']
-        self._wait()
+        self._wait(2)
 
         self._check_login(login)
         self._record_user_id()
@@ -49,7 +61,10 @@ class Bot:
     def _logout(self):
         request = self.client.session.post(url=urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
         if request.status_code in [302, 200]:
-            logger.info(f'Successfully log out for user: {self.username}')
+            logger.info(
+                f'Successfully logged out for user: {self.username}. '
+                f'Liked: {self.like_count}. Followed: {self.follow_count}'
+            )
             self.login_status = False
         else:
             logger.error(f'Failed to log out for user: {self.username}')
@@ -101,6 +116,7 @@ class Bot:
             return list()
 
     def _get_user(self, user_id: int) -> list:
+        """Not working for now"""
         if self.login_status is False:
             return list()
 
@@ -114,45 +130,55 @@ class Bot:
             logger.debug(f'Failed to info about user_id: {user_id}. Status code: {response.status_code}.')
             return list()
 
-    def _like(self, media_id: str) -> bool:
+    def _like(self, media_id: str):
         if self.login_status is False:
-            return False
+            return
 
         response = self.client.session.post(urls.url_likes.format(media_id))
 
         if response.status_code == 200:
             logger.debug(f'Liked media: {media_id}')
-            return True
+            self.like_count += 1
         else:
             logger.debug(f'Failed to like media: {media_id}. Status code: {response.status_code}.')
-            return False
 
-    def _follow(self, user_id: str) -> bool:
+    def _follow(self, user_id: str):
         if self.login_status is False:
-            return False
+            return
 
         response = self.client.session.post(urls.url_follow.format(user_id))
 
         if response.status_code == 200:
             logger.debug(f'Followed user_id: {user_id}')
-            return True
+            self.follow_count += 1
         else:
             logger.debug(f'Failed to follow user_id: {user_id}. Status code: {response.status_code}.')
-            return False
 
     def _wait(self, secs: int = None):
         secs_to_wait = secs or random.randint(2, 7)
         sleep(secs_to_wait)
 
-    def run(self):
-        self._login()
-        current_media = self._get_media_by_tag(random.choice(settings.TAGS))
-        self._like(current_media[2]['id'])
-        self._follow(current_media[1]['owner']['id'])
-        # self._get_user(current_media[1]['owner']['id'])  # Not working, need to get username
-        # self._fake_login('uQ46Uk7uMEcSsvXzdWvPtebxDEhYtam8')
-        self._logout()
+    def _start_loop(self):
+        while True:
+            for num, media in enumerate(self._get_media_by_tag(random.choice(self.user_settings['tags']))):
+                if media['is_video'] is True or media['likes']['count'] > 50:
+                    logger.debug(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
 
+                self._like(media['id'])
+                if random.randint(1, self.follow_ratio) == 1:
+                    self._follow(media['owner']['id'])
+                self._wait(self.like_wait_interval)
+            self._wait(3)
+
+    def run(self):
+        # self._fake_login('uQ46Uk7uMEcSsvXzdWvPtebxDEhYtam8')
+        try:
+            self._login()
+            self._start_loop()
+        except KeyboardInterrupt:
+            logger.info('Keyboard interruption')
+        finally:
+            self._logout()
 
 # Todo [Max] [16/11/2017 13:24] Limit number of likes/follows per day
 # Todo [Max] [16/11/2017 13:25] Write info to DB
