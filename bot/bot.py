@@ -39,10 +39,11 @@ class Bot:
 
         self.client = InstaParseClient(settings.INSTA_USERS[user].get('use_ip'))
 
-        logger.info(
+        self._log(
             f'\nInstabot for user: {user} was initialized.'
             f'\nLikes per day: {self.user_settings.get("likes_per_day", 1000)}. Follow ratio: 1/{self.follow_ratio}'
-            f'\nUsing IP: {self.client.external_ip_address}'
+            f'\nUsing IP: {self.client.external_ip_address}',
+            'info'
         )
 
     def _login(self):
@@ -61,29 +62,30 @@ class Bot:
     def _logout(self):
         request = self.client.session.post(url=urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
         if request.status_code in [302, 200]:
-            logger.info(
-                f'Successfully logged out for user: {self.username}. '
-                f'Liked: {self.like_count}. Followed: {self.follow_count}'
+            self._log(
+                f'Successfully logged out.'
+                f'Liked: {self.like_count}. Followed: {self.follow_count}',
+                'info'
             )
             self.login_status = False
         else:
-            logger.error(f'Failed to log out for user: {self.username}')
+            self._log(f'Failed to log out', 'error')
 
     def _check_login(self, login_response: requests.Response):
         if login_response.status_code == 200:
             self.login_status = True
-            logger.info(f'Login with user: {self.username} was successful!')
-            logger.debug(f'Using X-CSRFToken: {login_response.cookies["csrftoken"]}')
+            self._log(f'Login was successful!')
+            self._log(f'Using X-CSRFToken: {login_response.cookies["csrftoken"]}')
         else:
-            raise Exception(f'Login with user: {self.username} failed!')
+            raise Exception(f'Login failed!')
 
     def _record_user_id(self):
         response = self.client.request(url=urls.url_user.format(self.username))
         if response.status_code == 200:
             self.user_id = response.json()['user']['id']
-            logger.debug(f'User id: {self.user_id}')
+            self._log(f'User id: {self.user_id}')
         else:
-            logger.debug(f'Failed to get user id')
+            self._log(f'Failed to get user id')
 
     def _get_main_page(self):
         return self.client.session.get(url=urls.url_base)
@@ -99,7 +101,7 @@ class Bot:
         file_path = os.path.join(settings.HTML_SAMPLES_DIR_PATH, filename)
         with codecs.open(file_path, 'w', 'utf-16') as f:
             f.write(data)
-        logger.debug(f'Content was written to file: {filename}')
+        self._log(f'Content was written to file: {filename}')
 
     def _get_media_by_tag(self, tag: str) -> list:
         """Return list of Rough media data from Instagram"""
@@ -109,10 +111,10 @@ class Bot:
         response = self.client.session.get(urls.url_tag.format(tag))
 
         if response.status_code == 200:
-            logger.debug(f'Got media by tag: {tag}')
+            self._log(f'Got media by tag: {tag}')
             return list(response.json()['tag']['media']['nodes'])
         else:
-            logger.debug('Failed to get media by tag: {tag}. Status code: {response.status_code}')
+            self._log('Failed to get media by tag: {tag}. Status code: {response.status_code}', 'error')
             return list()
 
     def _get_user(self, user_id: int) -> list:
@@ -123,11 +125,11 @@ class Bot:
         response = self.client.session.get(urls.url_user.format(user_id))
 
         if response.status_code == 200:
-            logger.debug(f'Got info about user_id: {user_id}')
+            self._log(f'Got info about user_id: {user_id}')
             self.save_to_file(str(response.json()), 'user_info.js')
             return response.json()
         else:
-            logger.debug(f'Failed to info about user_id: {user_id}. Status code: {response.status_code}.')
+            self._log(f'Failed to info about user_id: {user_id}. Status code: {response.status_code}.', 'error')
             return list()
 
     def _like(self, media_id: str):
@@ -137,10 +139,10 @@ class Bot:
         response = self.client.session.post(urls.url_likes.format(media_id))
 
         if response.status_code == 200:
-            logger.debug(f'Liked media: {media_id}')
+            self._log(f'Liked media: {media_id}')
             self.like_count += 1
         else:
-            logger.debug(f'Failed to like media: {media_id}. Status code: {response.status_code}.')
+            self._log(f'Failed to like media: {media_id}. Status code: {response.status_code}.', 'error')
 
     def _follow(self, user_id: str):
         if self.login_status is False:
@@ -149,20 +151,26 @@ class Bot:
         response = self.client.session.post(urls.url_follow.format(user_id))
 
         if response.status_code == 200:
-            logger.debug(f'Followed user_id: {user_id}')
+            self._log(f'Followed user_id: {user_id}')
             self.follow_count += 1
         else:
-            logger.debug(f'Failed to follow user_id: {user_id}. Status code: {response.status_code}.')
+            self._log(f'Failed to follow user_id: {user_id}. Status code: {response.status_code}.', 'error')
 
     def _wait(self, secs: int = None):
         secs_to_wait = secs or random.randint(2, 7)
         sleep(secs_to_wait)
 
+    def _log(self, message: str, logger_name: str='debug'):
+        getattr(logger, logger_name)(f'User: {self.username}. {message}')
+
     def _start_loop(self):
         while True:
             for num, media in enumerate(self._get_media_by_tag(random.choice(self.user_settings['tags']))):
                 if media['is_video'] is True or media['likes']['count'] > 50:
-                    logger.debug(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
+                    self._log(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
+                    continue
+                if media['owner']['id'] == self.user_id:
+                    self._log(f'Miss media. It\'s your video :)')
                     continue
 
                 self._like(media['id'])
@@ -178,7 +186,7 @@ class Bot:
             self._login()
             self._start_loop()
         except KeyboardInterrupt:
-            logger.info('Keyboard interruption')
+            self._log('Keyboard interruption', 'info')
         finally:
             self._logout()
 

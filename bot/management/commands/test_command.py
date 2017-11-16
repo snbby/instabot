@@ -13,9 +13,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            print('ho')
-            raise Exception()
-            # sleep(5)
+            while True:
+                print('ho')
+                sleep(5)
         finally:
             print('finally')
 
