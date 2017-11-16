@@ -163,10 +163,12 @@ class Bot:
             for num, media in enumerate(self._get_media_by_tag(random.choice(self.user_settings['tags']))):
                 if media['is_video'] is True or media['likes']['count'] > 50:
                     logger.debug(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
+                    continue
 
                 self._like(media['id'])
                 if random.randint(1, self.follow_ratio) == 1:
                     self._follow(media['owner']['id'])
+
                 self._wait(self.like_wait_interval)
             self._wait(3)
 
