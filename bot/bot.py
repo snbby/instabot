@@ -1,8 +1,6 @@
 import codecs
-import json
 import logging
 import os
-import random
 from time import sleep
 import random
 
@@ -154,3 +152,7 @@ class Bot:
         # self._get_user(current_media[1]['owner']['id'])  # Not working, need to get username
         # self._fake_login('uQ46Uk7uMEcSsvXzdWvPtebxDEhYtam8')
         self._logout()
+
+
+# Todo [Max] [16/11/2017 13:24] Limit number of likes/follows per day
+# Todo [Max] [16/11/2017 13:25] Write info to DB
