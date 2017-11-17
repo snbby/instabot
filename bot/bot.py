@@ -36,6 +36,7 @@ class Bot:
 
         self.like_count = 0
         self.follow_count = 0
+        self.unfollow_count = 0
         self.series_errors = 0
 
         self.client = InstaParseClient(settings.INSTA_USERS[user].get('use_ip'))
@@ -65,7 +66,7 @@ class Bot:
         if request.status_code in [302, 200]:
             self._log(
                 f'Successfully logged out. '
-                f'Liked: {self.like_count}. Followed: {self.follow_count}',
+                f'Liked: {self.like_count}. Followed: {self.follow_count}. Unfollowed: {self.unfollow_count}',
                 'info'
             )
             self.login_status = False
@@ -158,6 +159,18 @@ class Bot:
             self.follow_count += 1
         else:
             self._log(f'Failed to follow user_id: {user_id}. Status code: {response.status_code}.', 'error')
+
+    def _unfollow(self, user_id: str):
+        if self.login_status is False:
+            raise InstaError(f'Is not logged in with user: {self.username}')
+
+        response = self.client.session.post(urls.url_unfollow.format(user_id))
+
+        if response.status_code == 200:
+            self._log(f'Unfollowed user_id: {user_id}')
+            self.unfollow_count += 1
+        else:
+            self._log(f'Failed to unfollow user_id: {user_id}. Status code: {response.status_code}.', 'error')
 
     def _wait(self, secs: int = None):
         secs_to_wait = secs or random.randint(1, 5)
