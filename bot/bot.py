@@ -64,7 +64,7 @@ class Bot:
         request = self.client.session.post(url=urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
         if request.status_code in [302, 200]:
             self._log(
-                f'Successfully logged out.'
+                f'Successfully logged out. '
                 f'Liked: {self.like_count}. Followed: {self.follow_count}',
                 'info'
             )
@@ -175,7 +175,7 @@ class Bot:
 
     def _start_loop(self):
         while True:
-            for num, media in enumerate(self._get_media_by_tag(random.choice(self.user_settings['tags']))):
+            for media in self._get_media_by_tag(random.choice(self.user_settings['tags'])):
                 if media['is_video'] is True or media['likes']['count'] > 50:
                     self._log(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
                     continue
@@ -197,5 +197,7 @@ class Bot:
             self._start_loop()
         except KeyboardInterrupt:
             self._log('Keyboard interruption', 'info')
+        except Exception as err:
+            self._log(f'Any other exception. Err: {str(err)}', 'error')
         finally:
             self._logout()
