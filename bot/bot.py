@@ -56,10 +56,16 @@ class Bot:
         login = self.client.session.post(url=urls.url_login, data=self.log_pass_pair, allow_redirects=True)
         self.client.session.headers['X-CSRFToken'] = login.cookies['csrftoken']
         self.csrf_token = login.cookies['csrftoken']
-        self._wait(2)
 
-        self._check_login(login)
+        if login.status_code == 200:
+            self.login_status = True
+            self._log(f'Login was successful!')
+            self._log(f'Using X-CSRFToken: {login.cookies["csrftoken"]}')
+        else:
+            raise InstaError(f'Login failed!')
+
         self._record_user_id()
+        self._wait(2)
 
     def _logout(self):
         request = self.client.session.post(url=urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
@@ -72,14 +78,6 @@ class Bot:
             self.login_status = False
         else:
             self._log(f'Failed to log out', 'error')
-
-    def _check_login(self, login_response: requests.Response):
-        if login_response.status_code == 200:
-            self.login_status = True
-            self._log(f'Login was successful!')
-            self._log(f'Using X-CSRFToken: {login_response.cookies["csrftoken"]}')
-        else:
-            raise Exception(f'Login failed!')
 
     def _record_user_id(self):
         response = self.client.request(url=urls.url_user.format(self.username))
@@ -225,6 +223,8 @@ class Bot:
             self._start_loop()
         except KeyboardInterrupt:
             self._log('Keyboard interruption', 'info')
+        except InstaError as err:
+            self._log(f'Exception: {str(err)}', 'error')
         except Exception as err:
             self._log(f'Any other exception. Err: {str(err)}', 'error')
         finally:
