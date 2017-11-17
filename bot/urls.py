@@ -7,7 +7,7 @@ url_follow = 'https://www.instagram.com/web/friendships/{}/follow/'
 url_unfollow = 'https://www.instagram.com/web/friendships/{}/unfollow/'
 url_login = 'https://www.instagram.com/accounts/login/ajax/'
 url_logout = 'https://www.instagram.com/accounts/logout/'
-url_media_detail = 'https://www.instagram.com/p/{}/?__a=1'
+url_media = 'https://www.instagram.com/p/{}/?__a=1'
 url_user = 'https://www.instagram.com/{}/?__a=1'
 
 url_external_ip = 'https://api.ipify.org?format=json'

@@ -91,51 +91,53 @@ class Bot:
     def _get_main_page(self):
         return self.client.session.get(url=urls.url_base)
 
-    def _fake_login(self, csrftoken: str):
-        """Use instead of login, if already know the token and know that there wasn't logout previously"""
-        self.client.session.headers['X-CSRFToken'] = csrftoken
-        self.client.session.cookies['csrftoken'] = csrftoken
-        self.csrf_token = csrftoken
-
-    def save_to_file(self, data: str, filename: str = 'tmp.html'):
-        """filename sample: tmp.html"""
-        file_path = os.path.join(settings.HTML_SAMPLES_DIR_PATH, filename)
-        with codecs.open(file_path, 'w', 'utf-16') as f:
-            f.write(data)
-        self._log(f'Content was written to file: {filename}')
-
     def _get_media_by_tag(self, tag: str) -> list:
-        """Return list of Rough media data from Instagram"""
+        """
+        Return list of Rough media data from Instagram
+        """
         if self.login_status is False:
-            return list()
+            raise InstaError(f'Is not logged in with user: {self.username}')
 
         response = self.client.session.get(urls.url_tag.format(tag))
 
         if response.status_code == 200:
             self._log(f'Got media by tag: {tag}')
-            return list(response.json()['tag']['media']['nodes'])
+            return response.json()['tag']['media']['nodes']
         else:
             self._log(f'Failed to get media by tag: {tag}. Status code: {response.status_code}', 'error')
             return list()
 
-    def _get_user(self, user_id: int) -> list:
-        """Not working for now"""
+    def _get_media(self, media_id: str) -> dict:
         if self.login_status is False:
-            return list()
+            raise InstaError(f'Is not logged in with user: {self.username}')
 
-        response = self.client.session.get(urls.url_user.format(user_id))
+        response = self.client.session.get(urls.url_media.format(media_id))
 
         if response.status_code == 200:
-            self._log(f'Got info about user_id: {user_id}')
+            self._log(f'Got info about media id: {media_id}')
+            self.save_to_file(str(response.json()), 'media_info.js')
+            return response.json()['graphql']['shortcode_media']
+        else:
+            self._log(f'Failed to info about media_id: {media_id}. Status code: {response.status_code}.', 'error')
+            return dict()
+
+    def _get_user(self, username: str) -> list:
+        if self.login_status is False:
+            raise InstaError(f'Is not logged in with user: {self.username}')
+
+        response = self.client.session.get(urls.url_user.format(username))
+
+        if response.status_code == 200:
+            self._log(f'Got info about user: {username}')
             self.save_to_file(str(response.json()), 'user_info.js')
             return response.json()
         else:
-            self._log(f'Failed to info about user_id: {user_id}. Status code: {response.status_code}.', 'error')
+            self._log(f'Failed to get info about user: {username}. Status code: {response.status_code}.', 'error')
             return list()
 
     def _like(self, media_id: str):
         if self.login_status is False:
-            return
+            raise InstaError(f'Is not logged in with user: {self.username}')
 
         response = self.client.session.post(urls.url_likes.format(media_id))
 
@@ -147,7 +149,7 @@ class Bot:
 
     def _follow(self, user_id: str):
         if self.login_status is False:
-            return
+            raise InstaError(f'Is not logged in with user: {self.username}')
 
         response = self.client.session.post(urls.url_follow.format(user_id))
 
@@ -158,10 +160,10 @@ class Bot:
             self._log(f'Failed to follow user_id: {user_id}. Status code: {response.status_code}.', 'error')
 
     def _wait(self, secs: int = None):
-        secs_to_wait = secs or random.randint(2, 7)
+        secs_to_wait = secs or random.randint(1, 5)
         sleep(secs_to_wait)
 
-    def _log(self, message: str, logger_name: str='debug'):
+    def _log(self, message: str, logger_name: str = 'debug'):
         getattr(logger, logger_name)(f'User: {self.username}. {message}')
 
         if logger_name == 'error':
@@ -171,7 +173,7 @@ class Bot:
 
         if self.series_errors >= 3:
             logger.error(f'User: {self.username}. Three errors in a row. Wait an hour for further processing')
-            self._wait(60*60)
+            self._wait(60 * 60)
 
     def _start_loop(self):
         while True:
@@ -180,7 +182,7 @@ class Bot:
                     self._log(f'Miss media. Is video: {media["is_video"]}. Like counter: {media["likes"]["count"]}')
                     continue
                 if media['owner']['id'] == self.user_id:
-                    self._log(f'Miss media. It\'s your video :)')
+                    self._log(f'Miss media. It\'s your media :)')
                     continue
 
                 self._like(media['id'])
@@ -188,7 +190,20 @@ class Bot:
                     self._follow(media['owner']['id'])
 
                 self._wait(self.like_wait_interval)
-            self._wait(3)
+            self._wait()
+
+    def fake_login(self, csrftoken: str):
+        """Use instead of login, if already know the token and know that there wasn't logout previously"""
+        self.client.session.headers['X-CSRFToken'] = csrftoken
+        self.client.session.cookies['csrftoken'] = csrftoken
+        self.csrf_token = csrftoken
+
+    def save_to_file(self, data: str, filename: str = 'tmp.html'):
+        """filename sample: tmp.html"""
+        file_path = os.path.join(settings.HTML_SAMPLES_DIR_PATH, filename)
+        with codecs.open(file_path, 'w', 'utf-16') as f:
+            f.write(data)
+        self._log(f'Content was written to file: {filename}')
 
     def run(self):
         # self._fake_login('uQ46Uk7uMEcSsvXzdWvPtebxDEhYtam8')
