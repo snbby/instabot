@@ -9,5 +9,6 @@ url_login = 'https://www.instagram.com/accounts/login/ajax/'
 url_logout = 'https://www.instagram.com/accounts/logout/'
 url_media = 'https://www.instagram.com/p/{}/?__a=1'
 url_user = 'https://www.instagram.com/{}/?__a=1'
+url_query = 'https://www.instagram.com/graphql/query/'
 
 url_external_ip = 'https://api.ipify.org?format=json'

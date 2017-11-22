@@ -4,6 +4,7 @@ import json
 
 import requests
 from requests_toolbelt.adapters import source
+from urllib.parse import urlencode
 
 from bot import insta_urls
 from bot.utils import retry
@@ -91,6 +92,11 @@ class InstaClient:
 
 
 class InstabotSession(requests.Session):
-    @retry(exceptions=requests.exceptions.RequestException, logger=logger)
+    @retry(exceptions=requests.exceptions.Timeout, logger=logger)
     def request(self, *args, **kwargs):
+        kwargs.setdefault('timeout', 30)
+        if kwargs.get('urlencode') is True and kwargs.get('params') is not None:
+            kwargs['params'] = urlencode(kwargs['params']).replace('%27', '%22').replace('+', '')
+            kwargs.pop('urlencode')
+
         return super().request(*args, **kwargs)

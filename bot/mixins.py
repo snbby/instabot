@@ -1,11 +1,12 @@
 import logging
-
 import codecs
 import os
 import random
 from time import sleep
 
 from django.conf import settings
+
+from bot.errors import InstaError
 
 logger = logging.getLogger('bot')
 
@@ -19,6 +20,7 @@ class BotSupportMixin:
     series_errors = None
     client = None
     csrf_token = None
+    login_status = None
 
     def fake_login(self, csrftoken: str):
         """Use instead of login, if already know the token and know that there wasn't logout previously"""
@@ -32,6 +34,10 @@ class BotSupportMixin:
         with codecs.open(file_path, 'w', 'utf-16') as f:
             f.write(data)
         self._log(f'Content was written to file: {filename}')
+
+    def _check_login(self):
+        if self.login_status is False:
+            raise InstaError(f'Is not logged in with user: {self.username}')
 
     def _wait(self, secs: int = None):
         secs_to_wait = secs or random.randint(1, 5)

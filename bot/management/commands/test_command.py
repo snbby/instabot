@@ -3,6 +3,8 @@ from time import sleep
 
 from django.core.management import BaseCommand
 
+from bot import Bot
+
 logger = logging.getLogger('bot.command.test_command')
 
 
@@ -12,10 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('-t', '--tags', dest='tags', nargs='*')
 
     def handle(self, *args, **options):
-        try:
-            while True:
-                print('ho')
-                sleep(5)
-        finally:
-            print('finally')
-
+        bot = Bot('i_see_smth')
+        bot._login()
+        bot._unfollow_loop()
+        bot._logout()
