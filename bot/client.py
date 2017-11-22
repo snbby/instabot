@@ -1,15 +1,19 @@
+import logging
 from http.cookies import SimpleCookie
 import json
 
 import requests
 from requests_toolbelt.adapters import source
 
-from bot import urls
+from bot import insta_urls
+from bot.utils import retry
+
+logger = logging.getLogger('bot.client')
 
 
-class InstaParseClient:
-    def __init__(self, use_ip: str=None):
-        self.session = requests.Session()
+class InstaClient:
+    def __init__(self, use_ip: str = None):
+        self.session = InstabotSession()
         if use_ip is not None:
             new_ip = source.SourceAddressAdapter(use_ip)
             self.session.mount('http://', new_ip)
@@ -81,8 +85,12 @@ class InstaParseClient:
     def _get_external_ip_address(self):
         external_ip = 'unknown'
         try:
-            external_ip = self.session.get(urls.url_external_ip).json()['ip']
+            external_ip = self.session.get(insta_urls.url_external_ip).json()['ip']
         finally:
             return external_ip
 
 
+class InstabotSession(requests.Session):
+    @retry(exceptions=requests.exceptions.RequestException, logger=logger)
+    def request(self, *args, **kwargs):
+        return super().request(*args, **kwargs)

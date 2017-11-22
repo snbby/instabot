@@ -31,7 +31,7 @@ class UserInfo:
         self.hello()
 
     def hello(self):
-        self.s = requests.Session()
+        self.s = requests.InstabotSession()
         self.s.headers.update({'User-Agent': self.user_agent})
         main = self.s.get(self.url_list[self.i_a]["main"])
         if main.status_code == 200:
