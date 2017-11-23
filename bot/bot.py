@@ -1,4 +1,5 @@
 import random
+import json
 
 from django.conf import settings
 
@@ -51,12 +52,12 @@ class Bot(BotSupportMixin):
         self.client.session.headers['X-CSRFToken'] = login.cookies['csrftoken']
         self.csrf_token = login.cookies['csrftoken']
 
-        if login.status_code == 200:
+        if json.loads(login.text)['authenticated'] is True:
             self.login_status = True
             self._log(f'Login was successful!')
             self._log(f'Using X-CSRFToken: {login.cookies["csrftoken"]}')
         else:
-            raise InstaError(f'Login failed!')
+            raise InstaError(f'Login failed!. Error: {login.text}')
 
         self._record_user_id()
         self._wait(2)
