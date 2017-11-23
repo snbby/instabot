@@ -16,5 +16,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         bot = Bot('i_see_smth')
         bot._login()
-        bot._unfollow_loop()
+        bot._unfollow_loop(max_follow_num=0)
         bot._logout()

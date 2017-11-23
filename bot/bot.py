@@ -100,6 +100,7 @@ class Bot(BotSupportMixin):
             return list()
 
     def _get_media(self, media_id: str) -> dict:
+        """Not used for now"""
         self._check_login()
 
         response = self.client.session.get(insta_urls.url_media.format(media_id))
@@ -113,6 +114,7 @@ class Bot(BotSupportMixin):
             return dict()
 
     def _get_user(self, username: str) -> dict:
+        """Not used for now"""
         self._check_login()
 
         response = self.client.session.get(insta_urls.url_user.format(username))
@@ -158,7 +160,7 @@ class Bot(BotSupportMixin):
         else:
             self._log(f'Failed to unfollow user_id: {user_id}. Error text: {response.text}.', 'error')
 
-    def _get_following(self, user_id: str = None) -> dict:
+    def _get_following(self, user_id: str = None, num_first_received: int = 100) -> dict:
         self._check_login()
         user_id = user_id or self.user_id
 
@@ -168,7 +170,7 @@ class Bot(BotSupportMixin):
                 'query_id': '17874545323001329',
                 'variables': {
                     'id': user_id,
-                    'first': 100
+                    'first': num_first_received
                 }
             },
             urlencode=True
@@ -181,11 +183,16 @@ class Bot(BotSupportMixin):
             self._log(f'Failed to get followers for user: {user_id}. Error text: {response.text}', 'error')
             return dict()
 
-    def _unfollow_loop(self):
+    def _unfollow_loop(self, num_unfollow: int = 10, max_follow_num: int = 30):
         following = self._get_following()
-        self.save_to_file(str(following), 'following.json')
-        if following and following['count'] < 30:
+        if following and following['count'] < max_follow_num:
             return  # Do nothing if we have less than 30 followers or there was an error in receiving
+        for num, follow_user in enumerate(following['edges'][::-1]):
+            if num == num_unfollow:
+                return  # Maximum unfollow num has been reached
+
+            self._unfollow(follow_user['node']['id'])
+            self._wait()
 
     def _start_loop(self):
         while True:
