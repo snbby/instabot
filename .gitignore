@@ -2,7 +2,7 @@
 venv3/
 __pycache__
 
-/bot/sample_data/
+bot/sample_data/
 common/log/
 common/settings.py
 bot/management/commands/test_command.py

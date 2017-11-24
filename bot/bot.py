@@ -128,7 +128,7 @@ class Bot(BotSupportMixin):
             self._log(f'Failed to get info about user: {username}. Error text: {response.text}.', 'error')
             return dict()
 
-    def _like(self, media_id: str):
+    def _like(self, media_id: str) -> bool:
         self._check_login()
 
         response = self.client.session.post(insta_urls.url_likes.format(media_id))
@@ -136,10 +136,15 @@ class Bot(BotSupportMixin):
         if response.status_code == 200:
             self._log(f'Liked media: {media_id}')
             self.like_count += 1
+            return True
+        elif response.status_code // 100 == 4 and 'missing media' in response.text:
+            self._log(f'Failed to like media: {media_id}. Missing media')
+            return False
         else:
             self._log(f'Failed to like media: {media_id}. Error text: {response.text}.', 'error')
+            return False
 
-    def _follow(self, user_id: str):
+    def _follow(self, user_id: str) -> bool:
         self._check_login()
 
         response = self.client.session.post(insta_urls.url_follow.format(user_id))
@@ -147,10 +152,12 @@ class Bot(BotSupportMixin):
         if response.status_code == 200:
             self._log(f'Followed user_id: {user_id}')
             self.follow_count += 1
+            return True
         else:
             self._log(f'Failed to follow user_id: {user_id}. Error text: {response.text}.', 'error')
+            return False
 
-    def _unfollow(self, user_id: str):
+    def _unfollow(self, user_id: str) -> bool:
         self._check_login()
 
         response = self.client.session.post(insta_urls.url_unfollow.format(user_id))
@@ -158,8 +165,14 @@ class Bot(BotSupportMixin):
         if response.status_code == 200:
             self._log(f'Unfollowed user_id: {user_id}')
             self.unfollow_count += 1
+            return True
+        elif response.status_code // 100 == 4 and 'Подождите несколько минут' in response.text:
+            self._log(f'Failed to get followers for user: {user_id}. Asked to wait a bit. Waiting 5 min', 'error')
+            self._wait(60*5)
+            return False
         else:
             self._log(f'Failed to unfollow user_id: {user_id}. Error text: {response.text}.', 'error')
+            return False
 
     def _get_following(self, user_id: str = None, num_first_received: int = 100) -> dict:
         self._check_login()
@@ -186,7 +199,7 @@ class Bot(BotSupportMixin):
 
     def _unfollow_loop(self, num_unfollow: int = 10, max_follow_num: int = 30):
         following = self._get_following()
-        if following and following['count'] < max_follow_num:
+        if not following or following and following['count'] < max_follow_num:
             return  # Do nothing if we have less than 30 followers or there was an error in receiving
         for num, follow_user in enumerate(following['edges'][::-1]):
             if num == num_unfollow:
@@ -205,11 +218,11 @@ class Bot(BotSupportMixin):
                     self._log(f'Miss media. It\'s your media :)')
                     continue
 
-                self._like(media['id'])
-                if random.randint(1, self.follow_ratio) == 1:
-                    self._follow(media['owner']['id'])
+                liked = self._like(media['id'])
+                followed = self._follow(media['owner']['id']) if random.randint(1, self.follow_ratio) == 1 else False
+                if liked or followed:
+                    self._wait(self.like_wait_interval)
 
-                self._wait(self.like_wait_interval)
             self._unfollow_loop()
             self._wait()
 
