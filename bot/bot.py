@@ -7,6 +7,7 @@ from bot import insta_urls
 from bot.mixins import BotSupportMixin
 from bot.client import InstaClient
 from bot.errors import InstaError
+from bot import utils
 
 
 class Bot(BotSupportMixin):
@@ -140,6 +141,11 @@ class Bot(BotSupportMixin):
         elif response.status_code // 100 == 4 and 'missing media' in response.text:
             self._log(f'Failed to like media: {media_id}. Missing media')
             return False
+        elif response.status_code // 100 == 4 and 'Действие заблокировано' in utils.latin_decoder(response.text):
+            self._log(f'Failed to like media: {media_id}. Asked to wait a bit. Waiting 10 min', 'error')
+            self._wait(60*10)
+            return False
+
         else:
             self._log(f'Failed to like media: {media_id}. Error text: {response.text}.', 'error')
             return False
@@ -167,7 +173,7 @@ class Bot(BotSupportMixin):
             self.unfollow_count += 1
             return True
         elif response.status_code // 100 == 4 and 'Подождите несколько минут' in response.text:
-            self._log(f'Failed to get followers for user: {user_id}. Asked to wait a bit. Waiting 5 min', 'error')
+            self._log(f'Failed to unfollow user: {user_id}. Asked to wait a bit. Waiting 5 min', 'error')
             self._wait(60*5)
             return False
         else:

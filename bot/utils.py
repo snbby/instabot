@@ -41,3 +41,11 @@ def retry(max_tries=3, delay=1, backoff=1.5, exceptions=(Exception,), logger=Non
         return _wrap
 
     return _retry
+
+
+def latin_decoder(text: str) -> str:
+    """Try to convert text to latin1"""
+    try:
+        return text.encode('latin1').decode()
+    except UnicodeEncodeError:
+        return ''
