@@ -145,7 +145,6 @@ class Bot(BotSupportMixin):
             self._log(f'Failed to like media: {media_id}. Asked to wait a bit. Waiting 10 min', 'error')
             self._wait(60*10)
             return False
-
         else:
             self._log(f'Failed to like media: {media_id}. Error text: {response.text}.', 'error')
             return False
