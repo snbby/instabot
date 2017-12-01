@@ -94,7 +94,6 @@ class Bot(BotSupportMixin):
 
         if response.status_code == 200:
             self._log(f'Got media by tag: {tag}')
-            self.save_to_file(str(response.json()['tag']['media']['nodes']), 'media_by_tag.json')
             return response.json()['tag']['media']['nodes']
         else:
             self._log_failed_response(response, f'Failed to get media by tag: {tag}')
