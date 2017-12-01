@@ -65,8 +65,8 @@ class Bot(BotSupportMixin):
         self._wait(2)
 
     def _logout(self):
-        request = self.client.session.post(url=insta_urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
-        if request.status_code in [302, 200]:
+        response = self.client.session.post(url=insta_urls.url_logout, data={'csrfmiddlewaretoken': self.csrf_token})
+        if response.status_code in [302, 200]:
             self._log(
                 f'Successfully logged out. '
                 f'Liked: {self.like_count}. Followed: {self.follow_count}. Unfollowed: {self.unfollow_count}',
@@ -74,7 +74,7 @@ class Bot(BotSupportMixin):
             )
             self.login_status = False
         else:
-            self._log(f'Failed to log out', 'error')
+            self._log_failed_response(response, f'Failed to log out for user: {self.user_id}')
 
     def _record_user_id(self):
         response = self.client.request(url=insta_urls.url_user.format(self.username))
@@ -82,10 +82,7 @@ class Bot(BotSupportMixin):
             self.user_id = response.json()['user']['id']
             self._log(f'User id: {self.user_id}')
         else:
-            self._log(f'Failed to get user id')
-
-    def _get_main_page(self):
-        return self.client.session.get(url=insta_urls.url_base)
+            self._log_failed_response(response, 'Failed to get user id')
 
     def _get_media_by_tag(self, tag: str) -> list:
         """
@@ -100,7 +97,7 @@ class Bot(BotSupportMixin):
             self.save_to_file(str(response.json()['tag']['media']['nodes']), 'media_by_tag.json')
             return response.json()['tag']['media']['nodes']
         else:
-            self._log(f'Failed to get media by tag: {tag}. Error text: {response.text}', 'error')
+            self._log_failed_response(response, f'Failed to get media by tag: {tag}')
             return list()
 
     def _get_media(self, media_id: str) -> dict:
@@ -114,7 +111,7 @@ class Bot(BotSupportMixin):
             self.save_to_file(str(response.json()), 'media_info.js')
             return response.json()['graphql']['shortcode_media']
         else:
-            self._log(f'Failed to info about media_id: {media_id}. Error text: {response.text}.', 'error')
+            self._log_failed_response(response, f'Failed to info about media_id: {media_id}')
             return dict()
 
     def _get_user(self, username: str) -> dict:
@@ -128,7 +125,7 @@ class Bot(BotSupportMixin):
             self.save_to_file(str(response.json()), 'user_info.js')
             return response.json()
         else:
-            self._log(f'Failed to get info about user: {username}. Error text: {response.text}.', 'error')
+            self._log_failed_response(response, f'Failed to get info about user: {username}')
             return dict()
 
     def _like(self, media_id: str) -> bool:
@@ -141,15 +138,8 @@ class Bot(BotSupportMixin):
             self.like_count += 1
             self.liked_ids.add(media_id)
             return True
-        elif response.status_code // 100 == 4 and 'missing media' in response.text:
-            self._log(f'Failed to like media: {media_id}. Missing media')
-            return False
-        elif response.status_code // 100 == 4 and 'Действие заблокировано' in utils.latin_decoder(response.text):
-            self._log(f'Failed to like media: {media_id}. Asked to wait a bit. Waiting 10 min', 'error')
-            self._wait(60*10)
-            return False
         else:
-            self._log(f'Failed to like media: {media_id}. Error text: {response.text}.', 'error')
+            self._log_failed_response(response, f'Failed to like media: {media_id}')
             return False
 
     def _follow(self, user_id: str) -> bool:
@@ -162,7 +152,7 @@ class Bot(BotSupportMixin):
             self.follow_count += 1
             return True
         else:
-            self._log(f'Failed to follow user_id: {user_id}. Error text: {response.text}.', 'error')
+            self._log_failed_response(response, f'Failed to follow user_id: {user_id}')
             return False
 
     def _unfollow(self, user_id: str) -> bool:
@@ -174,12 +164,8 @@ class Bot(BotSupportMixin):
             self._log(f'Unfollowed user_id: {user_id}')
             self.unfollow_count += 1
             return True
-        elif response.status_code // 100 == 4 and 'Подождите несколько минут' in response.text:
-            self._log(f'Failed to unfollow user: {user_id}. Asked to wait a bit. Waiting 5 min', 'error')
-            self._wait(60*5)
-            return False
         else:
-            self._log(f'Failed to unfollow user_id: {user_id}. Error text: {response.text}.', 'error')
+            self._log_failed_response(response, f'Failed to unfollow user_id: {user_id}.')
             return False
 
     def _get_following(self, user_id: str = None, num_first_received: int = 100) -> dict:
@@ -202,7 +188,7 @@ class Bot(BotSupportMixin):
             self._log(f'Got followers for user: {user_id}')
             return response.json()['data']['user']['edge_follow']
         else:
-            self._log(f'Failed to get followers for user: {user_id}. Error text: {response.text}', 'error')
+            self._log_failed_response(response, f'Failed to get following for user: {user_id}.')
             return dict()
 
     def _unfollow_loop(self, num_unfollow: int = 10, max_follow_num: int = 30):
