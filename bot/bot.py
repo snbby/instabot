@@ -31,6 +31,7 @@ class Bot(BotSupportMixin):
         self.csrf_token = None
 
         self.like_count = 0
+        self.liked_ids = set()
         self.follow_count = 0
         self.unfollow_count = 0
         self.series_errors = 0
@@ -96,6 +97,7 @@ class Bot(BotSupportMixin):
 
         if response.status_code == 200:
             self._log(f'Got media by tag: {tag}')
+            self.save_to_file(str(response.json()['tag']['media']['nodes']), 'media_by_tag.json')
             return response.json()['tag']['media']['nodes']
         else:
             self._log(f'Failed to get media by tag: {tag}. Error text: {response.text}', 'error')
@@ -137,6 +139,7 @@ class Bot(BotSupportMixin):
         if response.status_code == 200:
             self._log(f'Liked media: {media_id}')
             self.like_count += 1
+            self.liked_ids.add(media_id)
             return True
         elif response.status_code // 100 == 4 and 'missing media' in response.text:
             self._log(f'Failed to like media: {media_id}. Missing media')
@@ -221,6 +224,9 @@ class Bot(BotSupportMixin):
                     continue
                 if media['owner']['id'] == self.user_id:
                     self._log(f'Miss media. It\'s your media :)')
+                    continue
+                if media['id'] in self.liked_ids:
+                    self._log(f'Miss media. Already liked')
                     continue
 
                 liked = self._like(media['id'])
