@@ -20,6 +20,7 @@ class BotSupportMixin:
     """
     username = None
     series_errors = None
+    ban_count = None
     client = None
     csrf_token = None
     login_status = None
@@ -52,6 +53,7 @@ class BotSupportMixin:
             self.series_errors += 1
         else:
             self.series_errors = 0
+            self.ban_count = 0
 
         if self.series_errors >= 3:
             logger.error(f'User: {self.username}. Three errors in a row. Wait an hour for further processing')
@@ -64,8 +66,12 @@ class BotSupportMixin:
             self._log(f'{err_message}. Asked to wait a bit. Waiting 5 min', 'error')
             self._wait(60*5)
         elif response.status_code // 100 == 4 and 'Действие заблокировано' in utils.latin_decoder(response.text):
-            self._log(f'{err_message}. Action was blocked. Waiting 10 min', 'error')
+            self._log(f'{err_message}. Action was temporary blocked. Waiting 10 min', 'error')
             self._wait(60*10)
+        elif response.status_code // 100 == 4 and 'вы злоупотребляли' in utils.latin_decoder(response.text):
+            self.ban_count += 1
+            self._log(f'{err_message}. Action was banned. Waiting 1 hour. Ban count {self.ban_count}', 'error')
+            self._wait(60 * 60)
         elif response.status_code // 100 == 5:
             self._log(f'{err_message}. Server error', 'error')
         else:

@@ -30,8 +30,9 @@ class Bot(BotSupportMixin):
         self.user_id = None
         self.csrf_token = None
 
-        self.like_count = 0
         self.liked_ids = set()
+        self.ban_count = 0
+        self.like_count = 0
         self.follow_count = 0
         self.unfollow_count = 0
         self.series_errors = 0
