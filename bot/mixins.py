@@ -47,32 +47,34 @@ class BotSupportMixin:
         sleep(secs_to_wait)
 
     def _log(self, message: str, logger_name: str = 'debug'):
-        getattr(logger, logger_name)(f'User: {self.username}. {message}')
-
-        if logger_name == 'error':
-            self.series_errors += 1
-        else:
+        if logger_name != 'error':
             self.series_errors = 0
             self.ban_count = 0
-
-        if self.series_errors >= 3:
-            logger.error(f'User: {self.username}. Three errors in a row. Wait an hour for further processing')
-            self._wait(60 * 30)
+        getattr(logger, logger_name)(f'User: {self.username}. {message}')
 
     def _log_failed_response(self, response: requests.Response, err_message: str):
+        self.series_errors += 1
+        wait_time = None
+
         if response.status_code // 100 == 4 and 'missing media' in response.text:
             self._log(f'{err_message}. Missing media', 'error')
         elif response.status_code // 100 == 4 and 'Подождите несколько минут' in response.text:
             self._log(f'{err_message}. Asked to wait a bit. Waiting 5 min', 'error')
-            self._wait(60*5)
+            wait_time = 60 * 5
         elif response.status_code // 100 == 4 and 'Действие заблокировано' in utils.latin_decoder(response.text):
             self._log(f'{err_message}. Action was temporary blocked. Waiting 10 min', 'error')
-            self._wait(60*10)
+            wait_time = 60 * 10
         elif response.status_code // 100 == 4 and 'вы злоупотребляли' in utils.latin_decoder(response.text):
             self.ban_count += 1
             self._log(f'{err_message}. Action was banned. Waiting 1 hour. Ban count {self.ban_count}', 'error')
-            self._wait(60 * 60)
+            wait_time = 60 * 60
         elif response.status_code // 100 == 5:
             self._log(f'{err_message}. Server error', 'error')
         else:
             self._log(f'{err_message}. Error text: {response.text}. Error status: {response.status_code}', 'error')
+
+        if self.series_errors >= 3:
+            logger.error(f'User: {self.username}. Three errors in a row. Wait an hour for further processing')
+            self._wait(60 * 60)
+        elif wait_time is not None:
+            self._wait(wait_time)

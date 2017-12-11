@@ -7,7 +7,6 @@ from bot import insta_urls
 from bot.mixins import BotSupportMixin
 from bot.client import InstaClient
 from bot.errors import InstaError
-from bot import utils
 
 
 class Bot(BotSupportMixin):

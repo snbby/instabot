@@ -2,6 +2,7 @@ import logging
 from http.cookies import SimpleCookie
 import json
 
+
 import requests
 from requests_toolbelt.adapters import source
 from urllib.parse import urlencode
@@ -92,7 +93,7 @@ class InstaClient:
 
 
 class InstabotSession(requests.Session):
-    @retry(exceptions=requests.exceptions.Timeout, logger=logger)
+    @retry(exceptions=(requests.exceptions.Timeout, ConnectionRefusedError, ConnectionResetError), logger=logger)
     def request(self, *args, **kwargs):
         kwargs.setdefault('timeout', 30)
         if kwargs.get('urlencode') is True and kwargs.get('params') is not None:
