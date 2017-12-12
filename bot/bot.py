@@ -223,7 +223,6 @@ class Bot(BotSupportMixin):
             self._wait()
 
     def run(self):
-        # self._fake_login('uQ46Uk7uMEcSsvXzdWvPtebxDEhYtam8')
         try:
             self._login()
             self._start_loop()
