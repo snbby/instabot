@@ -93,7 +93,7 @@ class InstaClient:
 
 
 class InstabotSession(requests.Session):
-    @retry(exceptions=(requests.exceptions.Timeout, ConnectionRefusedError, ConnectionResetError), logger=logger)
+    @retry(exceptions=(requests.exceptions.Timeout, requests.ConnectionError), logger=logger)
     def request(self, *args, **kwargs):
         kwargs.setdefault('timeout', 30)
         if kwargs.get('urlencode') is True and kwargs.get('params') is not None:
