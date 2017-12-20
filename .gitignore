@@ -5,7 +5,7 @@ __pycache__
 
 bot/sample_data/*
 !bot/sample_data/.gitkeep
-support_files/*
+/common/support_files/
 common/settings.py
 bot/management/commands/test_command.py
 tmp.py

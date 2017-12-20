@@ -51,7 +51,7 @@ class BotSupportMixin:
             self.series_errors = 0
             self.ban_count = 0
 
-        extra_msg = {'user': self.username}
+        extra_msg = {'user_info': self.username}
         if extra is not None and isinstance(extra, dict):
             extra_msg.update(extra)
         getattr(logger, logger_name)(message, extra=extra_msg)
