@@ -205,7 +205,7 @@ class Bot(BotSupportMixin):
         while True:
             for media in self._get_media_by_tag(random.choice(self.user_settings['tags'])):
                 if media['node']['edge_liked_by']['count'] > 30:
-                    self._log(f'Miss media. Like counter: {media["likes"]["count"]}')
+                    self._log(f'Miss media. Like counter: {media["node"]["edge_liked_by"]["count"]}')
                     continue
                 if media['node']['owner']['id'] == self.user_id:
                     self._log(f'Miss media. It\'s your media :)')
