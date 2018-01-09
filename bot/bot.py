@@ -94,7 +94,7 @@ class Bot(BotSupportMixin):
 
         if response.status_code == 200:
             self._log(f'Got media by tag: {tag}')
-            return response.json()['tag']['media']['nodes']
+            return response.json()['graphql']['hashtag']['edge_hashtag_to_media']['edges']
         else:
             self._log_failed_response(response, f'Failed to get media by tag: {tag}')
             return list()
@@ -204,18 +204,19 @@ class Bot(BotSupportMixin):
     def _start_loop(self):
         while True:
             for media in self._get_media_by_tag(random.choice(self.user_settings['tags'])):
-                if media['likes']['count'] > 30:
+                if media['node']['edge_liked_by']['count'] > 30:
                     self._log(f'Miss media. Like counter: {media["likes"]["count"]}')
                     continue
-                if media['owner']['id'] == self.user_id:
+                if media['node']['owner']['id'] == self.user_id:
                     self._log(f'Miss media. It\'s your media :)')
                     continue
-                if media['id'] in self.liked_ids:
+                if media['node']['id'] in self.liked_ids:
                     self._log(f'Miss media. Already liked')
                     continue
 
-                liked = self._like(media['id'])
-                followed = self._follow(media['owner']['id']) if random.randint(1, self.follow_ratio) == 1 else False
+                liked = self._like(media['node']['id'])
+                followed = self._follow(media['node']['owner']['id']) \
+                    if random.randint(1, self.follow_ratio) == 1 else False
                 if liked or followed:
                     self._wait(self.like_wait_interval)
 
