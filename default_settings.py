@@ -3,6 +3,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR_PATH = os.path.join(BASE_DIR, 'common', 'log')
 HTML_SAMPLES_DIR_PATH = os.path.join(BASE_DIR, 'bot', 'sample_data')
+SECRET_KEY = '8j3&r_ya4p4k-c64folx3v2-w$y3o2$36=)8a=mf3-s-(q0h#9'
 
 DEBUG = True
 ALLOWED_HOSTS = []
@@ -16,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bot'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -47,14 +49,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'common.wsgi.application'
 
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -71,13 +71,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 STATIC_URL = '/static/'
 

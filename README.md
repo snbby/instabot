@@ -5,7 +5,7 @@ Simple bot that performs the above actions under your user
 
 1. Create file `common/settings.py` with content
 	```
-	from default_settings.py import *
+	from default_settings import *
 
 	INSTA_USERS = {
 		'USER_LOGIN': {
