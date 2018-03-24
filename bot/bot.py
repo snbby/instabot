@@ -54,7 +54,7 @@ class Bot(BotSupportMixin):
         self.client.session.headers['X-CSRFToken'] = login.cookies['csrftoken']
         self.csrf_token = login.cookies['csrftoken']
 
-        if json.loads(login.text)['authenticated'] is True:
+        if json.loads(login.text).get('authenticated') is True:
             self.login_status = True
             self._log(f'Login was successful!')
             self._log(f'Using X-CSRFToken: {login.cookies["csrftoken"]}')
