@@ -79,7 +79,7 @@ class Bot(BotSupportMixin):
     def _record_user_id(self):
         response = self.client.request(url=insta_urls.url_user.format(self.username))
         if response.status_code == 200:
-            self.user_id = response.json()['user']['id']
+            self.user_id = response.json()['graphql']['user']['id']
             self._log(f'User id: {self.user_id}')
         else:
             self._log_failed_response(response, 'Failed to get user id')
