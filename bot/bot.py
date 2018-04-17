@@ -61,7 +61,6 @@ class Bot(BotSupportMixin):
         else:
             raise InstaError(f'Login failed!. Error: {login.text}')
 
-        self._record_user_id()
         self._wait(2)
 
     def _logout(self):
@@ -215,12 +214,9 @@ class Bot(BotSupportMixin):
                     continue
 
                 liked = self._like(media['node']['id'])
-                followed = self._follow(media['node']['owner']['id']) \
-                    if random.randint(1, self.follow_ratio) == 1 else False
-                if liked or followed:
+                if liked:
                     self._wait(self.like_wait_interval)
 
-            self._unfollow_loop()
             self._wait()
 
     def run(self):
