@@ -2,7 +2,10 @@
 Simple bot that performs the above actions under your user
 
 ## Warning
-Follow & unfollow is not working now due to Instagram changes in mid april 2018
+--UNMAINTAINED!--
+
+Features are not working now, need to be fixed a little, after instagram update
+
 Need to add `x-instagram-gis` header for login
 Also change queries from `query_id` to `query_hash`
 Reference: https://github.com/rarcega/instagram-scraper/commit/a96e72b49233ea010b7637784beba1d1391f61bf
